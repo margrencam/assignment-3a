@@ -1,0 +1,479 @@
+---
+title: "assignment 3"
+author: "Marguerite CAMERON"
+date: "19 novembre 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```
+`%>%` <- magrittr::`%>%`
+```
+
+### Task A.
+
+Starting from the table `stressshift::stress_shift_unamb`, use `dplyr::filter` to extract only the data taken from dictionaries "W1802", "J1917", and "C1687". Store the resulting table in a variable called `stress_shift_3dict`. The resulting table, `stress_shift_3dict`, should have 451 rows. Add a line at the bottom of your chunk that checks this for you by printing the number of rows in the table.
+
+```{r}
+stressshift::stress_shift_unamb
+```
+
+
+
+```{r}
+dictionary <- stressshift::stress_shift_unamb
+stress_shift_3dict <- dplyr::filter(dictionary, Dict %in% c("C1687", "J1917", "W1802"))
+dplyr::count(stress_shift_3dict)
+```
+
+```{r}
+`%>%` <- magrittr::`%>%`
+dictionary <- stressshift::stress_shift_unamb
+stress_shift_3dict <- dplyr::filter(dictionary, Dict %in% c("C1687", "J1917", "W1802")) %>%
+  dplyr::count() %>%
+print
+identical(stress_shift_3dict, stress_shift_3dict_using_pipe)
+dplyr::count(stress_shift_3dict_using_pipe)
+
+  
+```
+
+
+
+### Task B.
+
+In the previous task, I asked you to use `dplyr::filter`. Many examples and tutorials you'll find online will first tell you to "attach" the `dplyr` package using the command `library(dplyr)` so that you can subsequently omit `dplyr::`. We discussed this briefly before, and I will continue suggest that you not do this. This means instead using the so-called "fully-qualified" name including the package name followed by `::`. I'll write a bit more on this below, but I'll just note here that, for the specific case of the function `filter`, the risk of making a mistake if you leave this out is particularly high.
+
+Here is a different approach to using packages. 
+Add a code chunk at the very beginning of your Rmd that contains only one line:
+
+```
+`%>%` <- magrittr::`%>%`
+```
+
+This line imports an extremely useful element called the forward-pipe operator (`%>%`) from a package called `magrittr`, but, unlike a call to `library(magrittr)`, this line imports only the one function that you need. Again, I'll give you a further note on this below.
+
+You are in no way obligated to use the forward pipe operator, but you'll need to understand what it does in order to read a lot of the documentation and help for `dplyr`. Thus, I'm giving you one exercise to practise using it, to help you understand it.
+Do some reading on `magrittr` and the forward-pipe operator (the help file for the forward-pipe operator, and particularly the part under **Using %>% with unary function calls**, should be useful). Then use `%>%` to re-do **Task A,** this time saving the result to a variable called `stress_shift_3dict_using_pipe`. The variables `stress_shift_3dict` and `stress_shift_3dict_using_pipe` should be identical. Thus, `identical(stress_shift_3dict, stress_shift_3dict_using_pipe)` should give the result `TRUE`. Add that as the last line in your chunk.
+
+
+### Task C.
+
+Use `dplyr::filter` to select only the observations for nouns from the three dictionaries above, storing the result as `stress_shift_3dict_nouns`, and then only the observations for verbs from the three dictionaries above, storing the result as `stress_shift_3dict_verbs`. Use `dplyr::bind_rows` to combine the two into a single table called `stress_shift_3dict_using_bind`. Now change the order of arguments to `dplyr::bind_rows` (if you previously put the noun table first and the verb table second in the function call, put the verb table first and the noun table second) and save the result into `stress_shift_3dict_using_bind_reversed`. 
+
+
+```{r}
+dictionary <- stressshift::stress_shift_unamb
+stress_shift_3dict <- dplyr::filter(dictionary, Dict %in% c("C1687", "J1917", "W1802"))
+stress_shift_3dict_nouns <- dplyr::filter(stress_shift_3dict, Category %in% "Noun")
+dplyr::count(stress_shift_3dict_nouns) %>%
+print
+
+stress_shift_3dict_verbs <- dplyr::filter(stress_shift_3dict, Category %in% "Verb")
+dplyr::count(stress_shift_3dict_verbs) %>%
+print
+
+stress_shift_3dict_using_bind <- dplyr::bind_rows(stress_shift_3dict_nouns, stress_shift_3dict_verbs)
+stress_shift_3dict_using_bind_reversed <- dplyr::bind_rows(stress_shift_3dict_verbs, stress_shift_3dict_nouns)
+
+identical(stress_shift_3dict, stress_shift_3dict_using_bind)
+identical(stress_shift_3dict, stress_shift_3dict_using_bind_reversed)
+
+## The variable stress_shift_3dict_using_bind is identical to the variable stress_shift_3dict.  It would be important to use the table that reflects the original data
+```
+
+
+One of the tables you just created is identical to `stress_shift_3dict`, and the other is not. Add two lines to the bottom of your chunk to verify this.
+Why is one table identical to `stress_shift_3dict` and the other non-identical? If you were going to work with this data, would it matter which of the two combined tables you worked with? Why or why not?
+
+
+### Task D.
+
+Use `dplyr::filter`, `dplyr::select`, and `dplyr::rename`, get the observations for nouns (no longer restricting yourself to the three dictionaries above), extracting only the columns `Word`, `Dict`, and `Syllable`, and leaving out the column `Category`, and changing the name of the column `Syllable` to `Syllable_Noun`. Save the result as `stress_shift_nouns_renamed`. 
+
+```{r}
+dictionary <- stressshift::stress_shift_unamb
+dict_nouns <- dplyr::filter(dictionary, Category %in% "Noun")
+dict_nouns_info <- dplyr::select(dict_nouns, -Category)
+print(dict_nouns_info)
+stress_shift_nouns_renamed <- dplyr::rename(dict_nouns_info, Syllable_Noun = Syllable)
+print(stress_shift_nouns_renamed)
+
+dict_verbs <- dplyr::filter(dictionary, Category %in% "Verb")
+dict_verbs_info <- dplyr::select(dict_verbs, -Category)
+print(dict_verbs_info)
+stress_shift_verbs_renamed <- dplyr::rename(dict_verbs_info, Syllable_Verb = Syllable)
+print(stress_shift_verbs_renamed)
+
+stress_shift_wide <- dplyr::inner_join(stress_shift_nouns_renamed, stress_shift_verbs_renamed)
+print(stress_shift_wide)
+
+## The contents of stress_shift_wide displays the complementary distribution of syllable stress on noun and verb forms of the the same orthographic representation.  It has fewer rows because there are instances of nouns that are stressed on the second syllable.
+
+```
+
+
+Now do the same for the verbs, changing the name of the `Syllable` column to `Syllable_Verb` and saving the result as `stress_shift_verbs_renamed`. Use `dplyr::inner_join` to combine these two tables into `stress_shift_wide`.
+
+Explain the contents of `stress_shift_wide`. Be sure to explain why it has fewer rows than the two original tables.
+
+### Task E.
+
+You've just "reshaped" a table. You've taken a single variable, `Syllable`, and you have decided to treat it as two separate variables, `Syllable_Noun` and `Syllable_Verb`. This is something that you should only do with a very good reason, and only if it really makes sense to change the way that you view your data. To illustrate a case where this might make sense, we will start by working a bit with the original (un-reshaped) table.
+Use `ggplot2` to make a double bar plot for `stressshift::stress_shift_unamb` similar to the one I gave you for `stressshift::stress_shift_permit` at the beginning of Exercise 4 in Assignment 1, using "Syllable" to fill in the colours of the bars, and "Category" on the $x$ axis.
+
+```{r}
+ggplot2::ggplot(stressshift::stress_shift_unamb,
+                ggplot2::aes(x=Category, fill=Syllable)) +
+  ggplot2::geom_bar(position="dodge", colour="black") +
+  ggplot2::scale_fill_brewer(palette="Set3")
+```
+
+
+Keep your code for this plot in mind as we move forward.
+
+
+### Task F.
+
+Now, starting with `stress_shift_wide`, use `dplyr::group_by` and `dplyr::summarize` to create a table with three columns: `Word`, `Noun_Percent_Syll_1`, and `Verb_Percent_Syll_1`. There should be one row per word (that is, the orthographic form "abstract", for example, should only appear in the first column once). The second and third columns should give the percentage of the rows in `stress_shift_wide` with `Syllable_Noun` equal to `"Syllable 1"` for the given word (that is, the word appearing in the `Word` column), and the percentage of rows in `stress_shift_wide` with `Syllable_Verb` equal to `"Syllable 1"` for the given word, respectively. Call the resulting table `stress_shift_byword`. It should have 149 rows. Add a line to your chunk that verifies this.
+
+```{r}
+stress_shift_wide %>%
+  dplyr::group_by(Word) %>%
+dplyr::count(Syllable_Noun, Syllable_Verb) %>% 
+  dplyr::transmute(Syllable_Noun, Noun_Percent_Syll_1 = n/sum(n), Syllable_Verb, Verb_Percent_Syll_1 = n/sum(n)) %>%
+  dplyr::filter(Syllable_Noun %in% c("Syllable 1")) %>%
+  dplyr::filter(Syllable_Verb %in% c("Syllable 1")) %>%
+  dplyr::select(Word, Noun_Percent_Syll_1, Verb_Percent_Syll_1)
+
+```
+
+
+
+### Task G.
+
+Use `ggplot2` to make a scatterplot with `Noun_Percent_Syll_1` on the x axis and `Verb_Percent_Syll_1` on the y axis, and with one point  on the graph representing each row (word) in the table. 
+
+Here, the practical interest of reshaping the table becomes clear: in the original tables, each row represents a single dictionary entry, either for a noun or for a verb, and there is a single column that gives the stress pattern for a given dictionary entry. Using this arrangement, you would never have been able to produce this graph using `ggplot2`. In `ggplot2`, each element of the graph (for example, the variable on the x axis and the variable on the y axis) correspond to one column in a table. In the original tables, there is only one column, containing both the noun data and the verb data. In the original tables, we are thinking of "affect", the noun, and "affect", the verb, as being two separate "words", each with their own independent stress pattern. In the reshaped tables, we are thinking of "affect" as being a single "word" which has one stress pattern when it is a noun and one when it is a verb.
+
+Only in this second view of things, corresponding to the reshaped tables, can we ask questions, or make graphs, relating the "stress on the noun" versus the "stress on the verb". Conversely, you wouldn't have been able to make the bar plot comparing "stress on nouns" and "stress on verbs" using the reshaped tables, because the y axis needs to correspond to a single variable. The bar graph plots a variable representing the "stress position of a word", which implies a different notion of word (under which the noun and the verb "affect" are different "words"). (One could, indeed, have chosen a different name for the "Word" column in the two types of tables, to make this clear.)
+
+
+```{r}
+
+ggplot2::ggplot(stress_shift_wide, ggplot2::aes(x=Noun_Percent_Syll_1, y=Verb_Percent_Syll_1)) +
+    ggplot2::geom_point(shape=1)
+```
+
+### Task H.
+
+Return to your answer from **Task D** about why `stress_shift_wide` has fewer rows than either `stress_shift_nouns_renamed` or `stress_shift_verbs_renamed`. Certain dictionary entries are missing from `stress_shift_wide`, as you discussed in your answer. 
+
+Starting from `stressshift::stress_shift_unamb`, use `dplyr` to create a new table called `stress_shift_byword_all` with the same structure as `stress_shift_byword`, but which does not omit these entries. It should have 149 rows, one word per row, a column called `Noun_Percent_Syll_1` containing the proportion of entries with the stress marked on the first syllable when the word is a noun, and a column called `Verb_Percent_Syll_1` containing the proportion of entries with the stress marked on the first syllable when the word is a verb. But the cases that were missing from `stress_shift_wide` should now be included when calculating this proportion.
+
+You should see that the value of `Noun_Percent_Syll_1` for "addict", which was given as `0.89473684` [= `17/19`] in the table `stress_shift_byword`, changes to `0.90000000` [= `18/20`] in the new table.
+
+
+\newpage
+
+## Exercise 2: A permutation test for categorical data
+
+Your task in this exercise is to use your code from the previous assignment (Assignment 2) to do a permutation test for the hypothesis that noun stress is systematically more likely to be on the first syllable than verb stress is, versus the hypothesis that the position of stress in nouns and verbs is drawn from the same distribution, basing your analysis on `stressshift::stress_shift_unamb`.
+
+### Task A.
+
+You will first need a new test statistic function. Create a file to store your functions for this assignment, source it at the beginning of your Rmd, and write a test statistic function, similar to `difference_in_medians`, that meets the following specification:
+
+
+```
+# Difference in the proportion of cases with a specific value between two groups.
+#
+# ARGUMENTS:
+# d: a data frame or tibble
+# var: the name of a column of d containing the dependent variable, provided as a string
+# grouping_var: the name of a column of d containing a grouping variable, provided as a string
+# group1: the value of grouping_var that corresponds to the first group
+# group2: the value of grouping_var that corresponds to the second group
+# target_value: the value of var that will be counted
+#
+# RETURN VALUE:
+# The percentage of cases in which `var` was equal to `target_value` for the first group,
+# minus the percentage of cases in which `var` was equal to `target_value` for the
+# second group.
+#
+difference_in_proportion <- function(d, var, grouping_var, group1, group2,
+                                     target_value) {
+  # YOUR CODE HERE: calculate the proportion of cases in which `var` is equal to
+  # the value specified in `target_value` in the first group, and then again in the
+  # second group
+  # YOUR CODE HERE: assign the difference in these proportions to the variable `result`
+  return(result)
+}
+```
+
+Insert a chunk that uses this function to calculate the observed value of the test statistic. If you use "Syllable 1" as the target value, with nouns as group 1 and verbs as group 2, the result should be `0.6839201`. 
+
+### Task B.
+
+In order to use this function in a permutation test, you'll need to slightly modify your existing permutation test code. Put your old permutation test code in your function file, including the randomization and p-value code, and make the following three changes to `permutation_twogroups`. First, replace this code
+
+```
+function(d, var, grouping_var, group1, group2, statistic, n_samples=9999)
+```
+
+with this slight modification:
+
+```
+function(d, var, grouping_var, group1, group2, statistic, n_samples=9999, ...)
+```
+
+And replace this code
+
+```
+observed_statistic <- statistic(d, var, grouping_var, group1, group2)
+```
+
+with this tiny modification:
+
+```
+observed_statistic <- statistic(d, var, grouping_var, group1, group2, ...)
+```
+
+Finally, to the line where you calculate `statistic` on the permuted table, add an argument `...` to the call to `statistic`, as the last argument.
+
+You should now be able to add a chunk containing the following code:
+
+
+```
+if(!exists(".Random.seed")) set.seed(NULL)
+previous_seed <- .Random.seed
+set.seed(1)
+ptest_stress <- permutation_twogroups(stressshift::stress_shift_unamb,
+                      "Syllable", "Category", "Noun", "Verb",
+                      difference_in_proportion,
+                      n_samples=99,
+                      "Syllable 1")
+set.seed(previous_seed)
+permutation_pvalue_right(ptest_stress)
+```
+
+For which the result should be `0.01`.
+
+Make a histogram of the resulting test statistics with a vertical line indicating the value of the observed test statistic. Use a bin width of 0.005 so that you can see something in the histogram (otherwise it's not going to have many bars).
+
+\newpage
+
+## Exercise 3: Simulating new cases like our own
+
+
+
+Each observation here corresponds to a dictionary entry for a word. Let's pretend for the purposes of this question that all of the observations in the full table are independent measurements. We will return to the definition of "statistically independent," but for now you can use your intuitive sense of what it means to be looking at two "independent" quantities or observations. You will probably agree that these observations don't represent facts that are independent of one another. For one thing, some observations are multiple dictionary entries for a single word, while some are entries for different words. Does knowing that "addict" was marked in two dictionaries with the stress on the first syllable represent two "independent facts" in the same way that knowing that "pressure" was marked with stress on the first syllable, and so was "chalice"? Additionally, the stress pattern listed probably depends on the year the dictionary was published; certain dictionaries might even just prefer to put stress on one or the other syllable. This means that observations from the same dictionary might not be independent either.
+
+Nevertheless, for now, let's assume that all the data points are independent. This means that new sets of observations (from new sets of hypothetical dictionaries similar to these) are trivially easy to simulate. We simply need to simulate one observation from each of two binomial distributions, one for nouns, and one for verbs. (Remember, from the reading, what this means. If it is not crystal clear, go back and re-re-read Chapter 2, section 2.2, and re-read Chapter 3, section 3.2.) A simple way to assert that the new dictionaries we've unearthed are similar to the old ones is to use the overall proportion of "Syllable 1" in the nouns and verbs in our own data as the two $p$ parameters in our binomial distributions.
+
+
+### Task A. 
+
+Calculate the overall proportion of "Syllable 1" for the nouns in `stressshift::stress_shift_unamb`, and, separately, for the verbs. (It is possible to do this using `dplyr::summarize`, but you don't have to.) Using `rbinom`, simulate 1000 new studies: for the nouns, simulate 1000 observations from a binomial distribution with `prob` equal to the observed relative frequency of "Syllable 1" among the nouns in the data set, with the number of trials equal to the number of noun observations in the data set (which, as you can verify, was 6506); similarly, for the verbs, simulate 1000 observations with `prob` equal to the observed relative frequency of "Syllable 1" among the verbs in the data set, with the number of trials equal to the number of noun observations in the data set (which, as you can verify, was 6732). Store the two vectors as columns, `Noun_N_Syll_1` and `Verb_N_Syll_1`, of a new table called `stress_shift_replications`. Add columns `Noun_Percent_Syll_1` and `Verb_Percent_Syll_1` with the appropriate relative frequencies for each replication. And add a column `Replication` containing `"R0001"`, `"R0002"`, ...,  as unique identifiers for each replication, which you can generate using the following code:
+
+```
+paste0("R", sprintf("%04d", 1:1000))
+```
+
+Finally, add a column called `Difference_in_Proportion` giving the value of the test statistic from before. You don't need to try to use your existing function. (That would be hard and pointless.) You just need to calculate the difference in the two proportions, noun minus verb.
+
+Make a histogram for this new distribution of test statistics, again with a vertical line at the observed value in the original data, plotting again with a bin width of 0.005-but change the $x$ limits of the graph by adding the following to the plot object:
+
+```
+ggplot2::xlim(c(-0.1, 0.8))
+```
+
+Now re-plot your test statistic distribution obtained using the permutation test, immediately below this new plot, with the same $x$ limits.
+
+Explain what these two histograms are showing. Relate the location of the vertical line to the result on page 57 of the Good textbook about the expected value of a binomial distribution.
+
+### Task B. 
+
+Keeping in mind that these new, simulated dictionary studies are probably not exactly like the original, for the reasons of independence discussed above, we can nevertheless ask what would happen if we performed our statistical tests for **(i)** the hypothesis that the noun distribution has more "Syllable 1" than the verb distribution, against **(ii)** the hypothesis that the noun and verb distributions are the same, on each of these new simulated studies. These experiments are constructed so that the "right" answer is to decide that the first hypothesis is better than the second. Given that the data is variable, is this the answer we will actually get?
+
+To keep things clear, we'll continue to apply permutation tests, using the same test statistic as before. You might think this is impossible, since we don't have a table listing the individual observations: all we have for each new experiment is a summary reporting the total number of times that "Syllable 1" was marked. However, this distribution is so simple that there's an easy way to do a large number of permutation tests of this kind reasonably quickly. I'll just give you the function to put in your functions file.
+
+```
+# Perform a permutation test for two implicit groups of binary trials summarized
+# by the number of "successes" and trials for each of the two groups, using the
+# difference in the proportion of successes (group 1 minus group 2) as a test
+# statistic.
+#
+# ARGUMENTS:
+# k1: the number of "successes" (i.e., observations of one of the two types) in group 1
+# k2: the number of "successes" in group 2
+# n1: the total number of trials in group 1
+# n2: the total number of trials in group 2
+# n_samples: the number of permutations (defaults to 9999)
+#
+# RETURN VALUE:
+# 
+# A list containing two elements:
+#
+#  - observed: the value of statistic() in d
+#  - permuted: a vector containing the values of statistic() under n_samples
+#              permutations
+#
+permtest_difference_in_props <- function(k1, k2, n1, n2, n_samples=9999) {
+  # Create a set of observations with exactly k1 and k2 successes
+  obs_1 <- c(rep(TRUE, k1), rep(FALSE, n1 - k1)) # Individual observations from group 1
+  obs_2 <- c(rep(TRUE, k2), rep(FALSE, n2 - k2)) # Individual observations from group 2
+  observations <- c(obs_1, obs_2)
+  
+  # Permute this set of observations n_samples times, saving the result in a
+  # matrix
+  rep_observations <- matrix(rep(observations, n_samples), n1 + n2)
+  perm_observations <- apply(rep_observations, 2, sample, n1 + n2)
+  
+  # Generate the proportions in the two groups amongst the permuted observations.
+  # Tricks: mean() of a TRUE/FALSE variable is the proportion "TRUE";
+  # instead of having explicit "Group" labels that we hold fixed, we just hold fixed
+  # that the first n1 rows are "Group 1" and the remaining n2 rows are "Group 2",
+  # which amounts to the same thing, and we generate the two percentages directly.
+  props_group1 <- colMeans(perm_observations[1:n1,])
+  props_group2 <- colMeans(perm_observations[(n1+1):(n1+n2),])
+  
+  test_stats <- props_group1 - props_group2
+  return(list(observed=((k1/n1) - (k2/n2)), permuted=test_stats))
+}
+```
+
+There are ways to speed this up, but this will do for our purposes.
+
+You've got my apologies for not being very instructive: I'm also going to simply **show** you, without explanation, what you need to do to use a function like this with `dplyr`. Because the first two arguments of this function need to be single numbers-but you have a whole table worth of `k1` and `k2` values-you will need to write a separate function to perform the test for multiple values of `k1` and `k2` first. At the very least, I'll make you fill in the crucial step inside the `for` loop.
+
+```
+v_pdp_pvalue_right <- function(k1_vec, k2_vec, n1, n2, n_samples=9999) {
+  result <- rep(NA, length(k1_vec))
+  for (i in 1:length(k1_vec)) {
+    # [YOUR CODE HERE: APPLY permtest_difference_in_props WITH THE i'TH VALUES
+    #  OF k1_vec AND OF k2_vec AS THE FIRST TWO ARGUMENTS, AND STORE THE
+    #  RESULT AS THE i'TH VALUE OF result]
+  }
+  return(result)
+}
+```
+
+Because this comes up a lot, there is an R function called `Vectorize` which will do this conversion from single-argument to vector-argument for you. It's sometimes faster than writing a loop yourself (but not in this case). A better, and much faster, way to do this would be to "parallelize" the execution, but I'll leave this to you to investigate. To use `dplyr` to add right-tail permutation $p$-values for each of the new experiments to the table, add a chunk like this with `cache=TRUE`, and fill in the blanks:
+
+```
+stress_shift_replications <- stress_shift_replications %>%
+  dplyr::mutate(
+    Permutation_Pvalue=v_pdp_pvalue_right(Noun_N_Syll_1, Verb_N_Syll_1,
+                                          [TOTAL NUMBER OF NOUN OBSERVATIONS],
+                                          [TOTAL NUMBER OF VERB OBSERVATIONS],
+                                          n_samples=99))
+```
+
+This will still take a bit, given the number of observations. What is the estimated statistical power of this significance test done at the 0.05 level in data sets like the ones we just generated?
+
+### Task C. 
+
+Re-do this power analysis under six conditions:
+
+- with one tenth the number of observations in each group (651 noun and 673 verb observations)
+- with the same overall number of observations, but with one tenth as many observations for verbs as for nouns (12034 noun and 1204 verb observations)
+- with a total of only 33 observations (16 noun observations and 17 verb observations)
+- with a total of 33 observations, but with one tenth as many observations for verbs as for nouns (30 noun observations and 3 verb observations)
+- with one tenth the number of observations, and a probability of "Syllable 1" of 0.52 for nouns and 0.48 for verbs
+- with the same original numbers of observations, and new underlying distributions in the two groups: a probability of "Syllable 1" of 0.52 for nouns and 0.48 for verbs
+
+Give the estimated statistical power at the 0.05 level under each of these conditions. Discuss the results.
+
+\newpage
+
+## Exercise 4: Testing the independence assumption
+
+We said that it's probably not the case that the observations in the original table are independent, but we didn't say what that means. Suppose we have observations that are binary-valued (either A or B), as we do here. From Chapter 3, recall that what it means for two of these observations to be independent is that, if the first observation turns out to be A, this gives no information whatsoever about whether the second observation will turn out to be A or B. This might be the case if I were turning to random pages and the dictionary and looking at the stress on the disyllabic nouns I found there. Even if it turned out that ninety percent of all disyllabic nouns had stress on the first syllable, the fact that I picked **cúrtain** (Syllable 1) on the first random page I turned to tells me nothing about whether, the next time, I'm going to turn to **bóttle** (Syllable 1) or **giráffe** (Syllable 2). But we have to doubt whether, after looking up **cúrtain** in one dictionary, we think we know nothing at all about what the next dictionary is going to tell us about the word **cúrtain**. Non-independence would mean that our power analysis might not be so reflective of what we would really expect to find in future such studies, and having an idea of what to expect is critical for planning those studies and for planning our analysis.
+
+A very simple case of evaluating an independence assumption arises when you have a clear hypothesis about what groups of observations might be related to one another in such a way as to give non-independent observations. In this case, our idea is that groups of observations that all correspond to the same word are going to be related to one another. The relevant test statistic is called "Pearson's cumulative test statistic," and we can write it like this (I'll write it in the form we were using before, applying to a whole data frame):
+
+```
+# Pearson's cumulative test statistic
+#
+# ARGUMENTS:
+# d: a data frame or tibble
+# var: the name of a column of d, provided as a string
+# grouping_var: the name of another column of d, provided as a string
+#
+# RETURN VALUE:
+# The value of Pearson's cumulative test statistic, calculated over all possible
+# combinations of `var` and `grouping_var`
+pearson_x2_stat <- function(d, var, grouping_var) {
+  values <- unique(d[[var]])
+  groups <- unique(d[[grouping_var]])
+  result <- 0
+  for (v in values) {
+    prop_overall <- mean(d[[var]] == v)
+    for (g in groups) {
+      d_g <- dplyr::filter(d, get(grouping_var) == g)
+      prop_g <- mean(d_g[[var]] == v)
+      result <- result + ((prop_g - prop_overall)^2)*(nrow(d_g)/prop_overall)
+    }
+  }
+  return(result)
+}
+```
+
+When written in this form, the key term is `(prop_g - prop_overall)^2`. The idea is that,
+for each of the two values of the variable `var` (in fact, there can be more than two: we
+could equally have had "Final Syllable", "Penultimate Syllable", or "Antepenultimate"; the
+test would stay the same), we will compare how far away the proportion of such cases for a particular
+group (a particular value of `grouping_var`) is from the overall proportion of such cases,
+by calculating the squared deviation. The remaining terms are critical to obtaining a classic
+result in statistics, due to Karl Pearson, about the approximate sampling distribution of this
+statistic (it follows a *chi-squared distribution*, which is why I called this function by
+its more usual name, "x2_stat": ??², or "chi squared", statistic). The approximate result isn't
+terribly relevant now that we can easily do permutation tests; in many cases the approximate
+result does not hold at all, but permutation tests will generally give accurate results.
+
+**Note**: this statistic will always get **bigger**
+the farther away `var` is from being independent of `grouping_var`.
+
+I've written this function so that you can plug it into a function like `permutation_twogroups`,
+which takes a table as its first argument, and assumes that its test statistic function
+is going to take some additional arguments specifying the names of relevant variables in that
+table. Except that `permutation_twogroups` won't work here, because it assumes the wrong arguments
+for `statistic`. Here is an even more general version than the one we used before.
+
+```
+# Perform a permutation test.
+#
+# ARGUMENTS:
+# d: a data frame or tibble
+# var_to_permute: the name of the column of d to permute
+# statistic: a function yielding a test statistic, which takes a table as input
+# n_samples: the number of permutation samples to draw (default: 9999)
+# ... : further arguments that will be passed to `statistic`
+#
+# RETURN VALUE:
+# 
+# A list containing two elements:
+#
+#  - observed: the value of statistic() in d
+#  - permuted: a vector containing the values of statistic() under n_samples
+#              permutations
+#
+permutation_test <- function(d, var_to_permute, statistic, n_samples=9999, ...) {
+  observed_statistic <- statistic(d, ...)
+  permutation_statistics <- rep(0, n_samples)
+  for (i in 1:n_samples) {
+    d_perm <- randomize(d, var_to_permute)
+    permutation_statistics[i] <- statistic(d_perm, ...)
+  }
+  result <- list(observed=observed_statistic,
+                 permuted=permutation_statistics)
+  return(result)
+}
+```
+
+Do a permutation test for the nouns, and a separate one for the verbs, to see if stress
+position is independent of word. Explain the result. You don't need to do a power analysis. 
